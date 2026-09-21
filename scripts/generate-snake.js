@@ -367,18 +367,18 @@ async function fetchRepos(user, token) {
   }
 }
 
-// 统计卡：440x176 圆角卡片，与 banner 同一套宣纸配色
+// 统计卡：440x176 圆角卡片，深色终端配色（与 banner 同一套）
 function renderStatsSvg(s) {
   const cell = (x, n, label) =>
-    `<text x="${x}" y="108" text-anchor="middle" font-family="'Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','SimSun',serif" font-size="30" fill="#20241f" font-weight="bold">${n}</text>`
-    + `<text x="${x}" y="132" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="12" fill="#676e66">${label}</text>`;
+    `<text x="${x}" y="108" text-anchor="middle" font-family="Cascadia Code,'JetBrains Mono',Consolas,'Courier New',monospace" font-size="30" fill="#e6edf3" font-weight="700">${n}</text>`
+    + `<text x="${x}" y="132" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="12" fill="#8b949e">${label}</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="440" height="176" viewBox="0 0 440 176" role="img" aria-labelledby="stitle">`
     + `<title id="stitle">公开作品与工程积累</title>`
-    + `<rect width="440" height="176" rx="14" fill="#f5f5ef"/>`
-    + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#d6dbd2"/>`
-    + `<rect x="0" y="0" width="6" height="176" rx="3" fill="#2f6047"/>`
-    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,monospace" font-size="11" letter-spacing="2" fill="#2f6047" font-weight="600">NOW BUILDING</text>`
-    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#20241f" font-weight="600">公开作品与工程积累</text>`
+    + `<rect width="440" height="176" rx="14" fill="#0d1117"/>`
+    + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#30363d"/>`
+    + `<rect x="0" y="0" width="6" height="176" rx="3" fill="#3fb950"/>`
+    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,'Courier New',monospace" font-size="11" letter-spacing="2" fill="#3fb950" font-weight="600">NOW BUILDING</text>`
+    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#e6edf3" font-weight="600">公开作品与工程积累</text>`
     + cell(55, s.featured, '代表作')
     + cell(165, s.sites, '线上站点')
     + cell(275, s.originals, '原创仓库')
@@ -388,22 +388,22 @@ function renderStatsSvg(s) {
 
 // 语言分布卡：按原创仓库体积占比
 function renderLangsSvg(langs) {
-  const barColors = ['#2f6047', '#4d7a5f', '#b28a55'];
+  const barColors = ['#3fb950', '#8957e5', '#d29922'];
   let rows = '';
   langs.slice(0, 3).forEach((l, i) => {
     const y = 94 + i * 32;
     const w = Math.max(6, Math.round(392 * l.pct / 100));
-    rows += `<text x="24" y="${y}" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="13" fill="#20241f">${l.name}</text>`
-      + `<text x="416" y="${y}" text-anchor="end" font-family="Georgia,serif" font-size="13" fill="#676e66">${l.pct.toFixed(0)}%</text>`
-      + `<rect x="24" y="${y + 6}" width="392" height="8" rx="4" fill="#e6eee7"/>`
+    rows += `<text x="24" y="${y}" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="13" fill="#e6edf3">${l.name}</text>`
+      + `<text x="416" y="${y}" text-anchor="end" font-family="Cascadia Code,'JetBrains Mono',Consolas,monospace" font-size="13" fill="#8b949e">${l.pct.toFixed(0)}%</text>`
+      + `<rect x="24" y="${y + 6}" width="392" height="8" rx="4" fill="#21262d"/>`
       + `<rect x="24" y="${y + 6}" width="${w}" height="8" rx="4" fill="${barColors[i]}"/>`;
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" width="440" height="176" viewBox="0 0 440 176" role="img" aria-labelledby="ltitle">`
     + `<title id="ltitle">原创仓库语言分布</title>`
-    + `<rect width="440" height="176" rx="14" fill="#f5f5ef"/>`
-    + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#d6dbd2"/>`
-    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,monospace" font-size="11" letter-spacing="2" fill="#2f6047" font-weight="600">ORIGINAL REPOS</text>`
-    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#20241f" font-weight="600">仓库语言分布</text>`
+    + `<rect width="440" height="176" rx="14" fill="#0d1117"/>`
+    + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#30363d"/>`
+    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,'Courier New',monospace" font-size="11" letter-spacing="2" fill="#3fb950" font-weight="600">ORIGINAL REPOS</text>`
+    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#e6edf3" font-weight="600">仓库语言分布</text>`
     + rows + `</svg>`;
 }
 
