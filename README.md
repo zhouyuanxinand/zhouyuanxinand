@@ -89,7 +89,3 @@
     <img alt="贪吃蛇吃贡献图" src="https://raw.githubusercontent.com/zhouyuanxinand/zhouyuanxinand/output/github-snake.svg" width="100%" />
   </picture>
 </div>
-
-<p align="center">
-  <sub><i>贪吃蛇由 <a href="scripts/generate-snake.js">generate-snake.js</a> 每日自动生成（视觉灵感来自 <a href="https://github.com/Platane/snk">Platane/snk</a>）。</i></sub>
-</p>
