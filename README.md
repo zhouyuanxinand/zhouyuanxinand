@@ -14,11 +14,6 @@
   </p>
 </div>
 
-后端开发 / AI 应用 / 持续写作。写代码，也写生活。  
-*Stay hungry, stay foolish.*
-
-代表作是 hiveteam、code-janitor 和 nocap；偏爱零依赖、零构建的简单实现。
-
 ---
 
 ### 🚀 代表作 / Featured Projects
