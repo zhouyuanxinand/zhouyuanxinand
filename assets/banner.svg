@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="title desc">
+  <title id="title">周园鑫 · 后端开发 / AI 应用 / 持续写作</title>
+  <desc id="desc">Stay hungry, stay foolish.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f9f9f4"/>
+      <stop offset="55%" stop-color="#f4f5ee"/>
+      <stop offset="100%" stop-color="#ecefe3"/>
+    </linearGradient>
+    <radialGradient id="leafGlow" cx="82%" cy="8%" r="48%">
+      <stop offset="0%" stop-color="#446952" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#446952" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="goldGlow" cx="12%" cy="90%" r="42%">
+      <stop offset="0%" stop-color="#b28a55" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#b28a55" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#2f6047" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="360" fill="url(#paper)"/>
+  <rect width="1280" height="360" fill="url(#leafGlow)"/>
+  <rect width="1280" height="360" fill="url(#goldGlow)"/>
+  <rect width="1280" height="360" fill="url(#dots)"/>
+  <rect x="24" y="24" width="1232" height="312" fill="none" stroke="#d6dbd2" stroke-width="1"/>
+  <rect x="18" y="18" width="8" height="324" fill="#2f6047"/>
+  <rect x="26" y="18" width="3" height="324" fill="#b28a55"/>
+
+  <text x="1188" y="86" text-anchor="end" font-family="'Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','SimSun',serif" font-size="92" fill="#2f6047" fill-opacity="0.07">鑫</text>
+
+  <text x="72" y="78" font-family="Cascadia Code,'JetBrains Mono',Consolas,monospace" font-size="14" letter-spacing="4.2" fill="#2f6047">ZHOUYUANXINAND.GITHUB.IO</text>
+  <text x="72" y="168" font-family="'Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','SimSun',serif" font-size="76" fill="#20241f">周园鑫</text>
+  <text x="72" y="214" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="26" fill="#2f6047">后端开发 / AI 应用 / 持续写作</text>
+  <text x="72" y="254" font-family="Georgia,'Times New Roman',serif" font-size="20" font-style="italic" fill="#676e66">Stay hungry, stay foolish.</text>
+
+  <g font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="15" fill="#214a35">
+    <rect x="72" y="282" width="92" height="32" rx="16" fill="#e6eee7" stroke="#2f6047" stroke-opacity="0.28"/>
+    <text x="118" y="303" text-anchor="middle">hiveteam</text>
+    <rect x="172" y="282" width="126" height="32" rx="16" fill="#e6eee7" stroke="#2f6047" stroke-opacity="0.28"/>
+    <text x="235" y="303" text-anchor="middle">code-janitor</text>
+    <rect x="306" y="282" width="66" height="32" rx="16" fill="#e6eee7" stroke="#2f6047" stroke-opacity="0.28"/>
+    <text x="339" y="303" text-anchor="middle">nocap</text>
+  </g>
+
+  <g transform="translate(1048, 86)">
+    <circle cx="70" cy="70" r="68" fill="none" stroke="#b28a55" stroke-width="1.4"/>
+    <circle cx="70" cy="70" r="58" fill="#fbfbf6" stroke="#2f6047" stroke-width="1.2"/>
+    <text x="70" y="80" text-anchor="middle" font-family="'Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','SimSun',serif" font-size="42" fill="#2f6047">鑫</text>
+    <text x="70" y="98" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12" letter-spacing="1.6" fill="#b28a55">STAY HUNGRY</text>
+  </g>
+</svg>

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['scripts/**', '.github/workflows/snake.yml', 'README.md']
+    paths: ['scripts/**', '.github/workflows/snake.yml', 'README.md', 'assets/**']
 
 permissions:
   contents: write
@@ -38,9 +38,9 @@ jobs:
           else
             git switch --orphan output
           fi
-          rm -f github-snake.svg github-snake-dark.svg
-          cp dist/github-snake.svg dist/github-snake-dark.svg .
-          git add github-snake.svg github-snake-dark.svg
+          rm -f github-snake.svg github-snake-dark.svg stats.svg langs.svg
+          cp dist/*.svg .
+          git add ./*.svg
           if git diff --cached --quiet; then
             echo "内容无变化，跳过推送"
             exit 0

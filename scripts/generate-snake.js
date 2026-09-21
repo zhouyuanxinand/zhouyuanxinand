@@ -381,6 +381,63 @@ function renderSvg(theme, ctx) {
 }
 
 // ---------------------------------------------------------------------------
+// 仓库概况（用于统计卡）
+// ---------------------------------------------------------------------------
+async function fetchRepos(user, token) {
+  if (!token) return null;
+  try {
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/repos?per_page=100&sort=pushed`, {
+      headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'snake-svg-generator' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn(`仓库列表拉取失败（${e.message}），跳过统计卡生成`);
+    return null;
+  }
+}
+
+// 统计卡：440x176 圆角卡片，与 banner 同一套宣纸配色
+function renderStatsSvg(s) {
+  const cell = (x, n, label) =>
+    `<text x="${x}" y="108" text-anchor="middle" font-family="'Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','SimSun',serif" font-size="30" fill="#20241f" font-weight="bold">${n}</text>`
+    + `<text x="${x}" y="132" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="12" fill="#676e66">${label}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="440" height="176" viewBox="0 0 440 176" role="img" aria-labelledby="stitle">`
+    + `<title id="stitle">公开作品与工程积累</title>`
+    + `<rect width="440" height="176" rx="14" fill="#f5f5ef"/>`
+    + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#d6dbd2"/>`
+    + `<rect x="0" y="0" width="6" height="176" rx="3" fill="#2f6047"/>`
+    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,monospace" font-size="11" letter-spacing="2" fill="#2f6047" font-weight="600">NOW BUILDING</text>`
+    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#20241f" font-weight="600">公开作品与工程积累</text>`
+    + cell(55, s.featured, '代表作')
+    + cell(165, s.sites, '线上站点')
+    + cell(275, s.originals, '原创仓库')
+    + cell(385, s.months, '活跃月份')
+    + `</svg>`;
+}
+
+// 语言分布卡：按原创仓库体积占比
+function renderLangsSvg(langs) {
+  const barColors = ['#2f6047', '#4d7a5f', '#b28a55'];
+  let rows = '';
+  langs.slice(0, 3).forEach((l, i) => {
+    const y = 94 + i * 32;
+    const w = Math.max(6, Math.round(392 * l.pct / 100));
+    rows += `<text x="24" y="${y}" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="13" fill="#20241f">${l.name}</text>`
+      + `<text x="416" y="${y}" text-anchor="end" font-family="Georgia,serif" font-size="13" fill="#676e66">${l.pct.toFixed(0)}%</text>`
+      + `<rect x="24" y="${y + 6}" width="392" height="8" rx="4" fill="#e6eee7"/>`
+      + `<rect x="24" y="${y + 6}" width="${w}" height="8" rx="4" fill="${barColors[i]}"/>`;
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="440" height="176" viewBox="0 0 440 176" role="img" aria-labelledby="ltitle">`
+    + `<title id="ltitle">原创仓库语言分布</title>`
+    + `<rect width="440" height="176" rx="14" fill="#f5f5ef"/>`
+    + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#d6dbd2"/>`
+    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,monospace" font-size="11" letter-spacing="2" fill="#2f6047" font-weight="600">ORIGINAL REPOS</text>`
+    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#20241f" font-weight="600">仓库语言分布</text>`
+    + rows + `</svg>`;
+}
+
+// ---------------------------------------------------------------------------
 // 主流程
 // ---------------------------------------------------------------------------
 function parseArgs(argv) {
@@ -438,6 +495,36 @@ async function main() {
     const file = path.join(outDir, theme === 'light' ? 'github-snake.svg' : 'github-snake-dark.svg');
     fs.writeFileSync(file, svg);
     console.log(`✓ ${file}（${(svg.length / 1024).toFixed(1)} KB）`);
+  }
+
+  // 统计卡：仓库概况 + 语言分布（数据取不到时跳过）
+  const repos = await fetchRepos(opts.user, process.env.GITHUB_TOKEN);
+  if (repos) {
+    const own = repos.filter(r => !r.fork);
+    const sites = own.filter(r => r.homepage || r.name === `${opts.user}.github.io`).length;
+    const originals = own.length;
+    const months = new Set(days.filter(d => d.count > 0).map(d => d.date.slice(0, 7))).size;
+    const stats = {
+      featured: 3, // 与 README「代表作」表格保持一致
+      sites,
+      originals,
+      months: months >= 12 ? 12 : `${months}`,
+    };
+    fs.writeFileSync(path.join(outDir, 'stats.svg'), renderStatsSvg(stats));
+    console.log(`✓ ${path.join(outDir, 'stats.svg')}（代表作 ${stats.featured} / 站点 ${sites} / 仓库 ${originals} / 活跃月 ${months}）`);
+
+    const byLang = new Map();
+    for (const r of own) {
+      if (!r.language) continue;
+      byLang.set(r.language, (byLang.get(r.language) || 0) + r.size);
+    }
+    const totalSize = [...byLang.values()].reduce((a, b) => a + b, 0) || 1;
+    const langs = [...byLang.entries()]
+      .map(([name, size]) => ({ name, pct: (size * 100) / totalSize }))
+      .filter(l => l.pct >= 1)
+      .sort((a, b) => b.pct - a.pct);
+    fs.writeFileSync(path.join(outDir, 'langs.svg'), renderLangsSvg(langs));
+    console.log(`✓ ${path.join(outDir, 'langs.svg')}（${langs.map(l => l.name + ' ' + l.pct.toFixed(0) + '%').join(' / ')}）`);
   }
 
   console.log(`用户 ${opts.user} | 贡献 ${total} 次 | 数据源 ${source}`);
