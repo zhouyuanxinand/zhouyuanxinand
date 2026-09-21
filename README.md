@@ -98,11 +98,3 @@
 <p align="center">
   <sub><i>统计卡与贪吃蛇由 <a href="scripts/generate-snake.js">generate-snake.js</a> 每日自动生成（视觉灵感来自 <a href="https://github.com/Platane/snk">Platane/snk</a>）。</i></sub>
 </p>
-
----
-
-### 📬 联系与交流 / Contact
-
-- 🌐 个人站：[zhouyuanxinand.github.io](https://zhouyuanxinand.github.io/)
-- 📧 邮箱：[3089729486@qq.com](mailto:3089729486@qq.com)
-- 💬 写代码，也写生活。
