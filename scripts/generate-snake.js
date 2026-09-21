@@ -368,21 +368,22 @@ async function fetchRepos(user, token) {
 }
 
 // 统计卡：440x176 圆角卡片，深色终端配色（与 banner 同一套）
+// 经历数字来自个人网站 zhouyuanxinand.github.io（4 段实习 / 2 次创业 / 14 章教材）
 function renderStatsSvg(s) {
   const cell = (x, n, label) =>
     `<text x="${x}" y="108" text-anchor="middle" font-family="Cascadia Code,'JetBrains Mono',Consolas,'Courier New',monospace" font-size="30" fill="#e6edf3" font-weight="700">${n}</text>`
     + `<text x="${x}" y="132" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="12" fill="#8b949e">${label}</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="440" height="176" viewBox="0 0 440 176" role="img" aria-labelledby="stitle">`
-    + `<title id="stitle">公开作品与工程积累</title>`
+    + `<title id="stitle">实习、创业与写作经历</title>`
     + `<rect width="440" height="176" rx="14" fill="#0d1117"/>`
     + `<rect x="1" y="1" width="438" height="174" rx="13" fill="none" stroke="#30363d"/>`
     + `<rect x="0" y="0" width="6" height="176" rx="3" fill="#3fb950"/>`
-    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,'Courier New',monospace" font-size="11" letter-spacing="2" fill="#3fb950" font-weight="600">NOW BUILDING</text>`
-    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#e6edf3" font-weight="600">公开作品与工程积累</text>`
-    + cell(55, s.featured, '代表作')
-    + cell(165, s.sites, '线上站点')
-    + cell(275, s.originals, '原创仓库')
-    + cell(385, s.months, '活跃月份')
+    + `<text x="24" y="34" font-family="Cascadia Code,'JetBrains Mono',Consolas,'Courier New',monospace" font-size="11" letter-spacing="2" fill="#3fb950" font-weight="600">EXPERIENCE</text>`
+    + `<text x="24" y="58" font-family="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif" font-size="16" fill="#e6edf3" font-weight="600">实习、创业与写作</text>`
+    + cell(55, s.internships, '段实习')
+    + cell(165, s.startups, '次创业')
+    + cell(275, s.chapters, '章教材')
+    + cell(385, s.originals, '开源仓库')
     + `</svg>`;
 }
 
@@ -473,21 +474,18 @@ async function main() {
     console.log(`✓ ${file}（${(svg.length / 1024).toFixed(1)} KB）`);
   }
 
-  // 统计卡：仓库概况 + 语言分布（数据取不到时跳过）
+  // 统计卡：经历数字（来自个人网站）+ GitHub 原创仓库数（动态）
   const repos = await fetchRepos(opts.user, process.env.GITHUB_TOKEN);
   if (repos) {
     const own = repos.filter(r => !r.fork);
-    const sites = own.filter(r => r.homepage || r.name === `${opts.user}.github.io`).length;
-    const originals = own.length;
-    const months = new Set(days.filter(d => d.count > 0).map(d => d.date.slice(0, 7))).size;
     const stats = {
-      featured: 3, // 与 README「代表作」表格保持一致
-      sites,
-      originals,
-      months: months >= 12 ? 12 : `${months}`,
+      internships: 4, // 段实习：神州数码 / 时代共赢 / AIA / 美团 / 百词斩
+      startups: 2,    // 次创业：胖鱼智能 / 湖南英途维
+      chapters: 14,   // 章技术教材
+      originals: own.length,
     };
     fs.writeFileSync(path.join(outDir, 'stats.svg'), renderStatsSvg(stats));
-    console.log(`✓ ${path.join(outDir, 'stats.svg')}（代表作 ${stats.featured} / 站点 ${sites} / 仓库 ${originals} / 活跃月 ${months}）`);
+    console.log(`✓ ${path.join(outDir, 'stats.svg')}（实习 ${stats.internships} / 创业 ${stats.startups} / 教材 ${stats.chapters} / 仓库 ${stats.originals}）`);
 
     const byLang = new Map();
     for (const r of own) {

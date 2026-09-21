@@ -71,7 +71,7 @@
 
 <p align="center">
   <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=typescript,javascript,nodejs,html,css,git&theme=dark" alt="Tech Stack" />
+    <img src="https://skillicons.dev/icons?i=typescript,javascript,java,python,go,rust,nodejs,html,css,git&theme=dark" alt="Tech Stack" />
   </a>
 </p>
 
@@ -80,7 +80,7 @@
 ### 📊 工程积累与状态 / Activity &amp; Stats
 
 <div align="center">
-  <img height="176" src="https://raw.githubusercontent.com/zhouyuanxinand/zhouyuanxinand/output/stats.svg" alt="公开作品摘要：3 件代表作，3 个线上站点，5 个原创仓库" />
+  <img height="176" src="https://raw.githubusercontent.com/zhouyuanxinand/zhouyuanxinand/output/stats.svg" alt="经历摘要：4 段实习，2 次创业，14 章技术教材" />
   <img height="176" src="https://raw.githubusercontent.com/zhouyuanxinand/zhouyuanxinand/output/langs.svg" alt="原创仓库语言分布" />
 </div>
 
