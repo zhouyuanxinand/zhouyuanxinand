@@ -77,16 +77,40 @@
 
 ---
 
-### 📊 工程积累与状态 / Activity &amp; Stats
+### 💼 工作经历 / Experience
 
-<div align="center">
-  <img height="176" src="https://raw.githubusercontent.com/zhouyuanxinand/zhouyuanxinand/output/stats.svg" alt="经历摘要：4 段实习，2 次创业，14 章技术教材" />
-  <img height="176" src="https://raw.githubusercontent.com/zhouyuanxinand/zhouyuanxinand/output/langs.svg" alt="原创仓库语言分布" />
-</div>
-
-<p align="center">
-  <sub><i>语言占比按原创仓库体积估算，不代表个人熟练度。</i></sub>
-</p>
+<table>
+  <tr>
+    <td width="72" align="center" valign="middle"><img src="./assets/logos/digitalchina.png" width="44" alt="神州数码集团" /></td>
+    <td valign="middle"><b>神州数码集团</b></td>
+    <td valign="middle">Agent 开发工程师</td>
+    <td align="right" valign="middle"><sub>2026.06 — 至今</sub></td>
+  </tr>
+  <tr>
+    <td width="72" align="center" valign="middle"><img src="./assets/logos/shidai.png" width="44" alt="时代共赢私募基金" /></td>
+    <td valign="middle"><b>时代共赢私募基金</b></td>
+    <td valign="middle">量化开发工程师</td>
+    <td align="right" valign="middle"><sub>2026.03 — 2026.06</sub></td>
+  </tr>
+  <tr>
+    <td width="72" align="center" valign="middle"><img src="./assets/logos/aia.svg" width="52" alt="AIA" /></td>
+    <td valign="middle"><b>AIA</b><br /><sub>友邦保险集团全球技术创新中心</sub></td>
+    <td valign="middle">AI 应用开发实习生 · RD 部门</td>
+    <td align="right" valign="middle"><sub>2025.12 — 2026.03</sub></td>
+  </tr>
+  <tr>
+    <td width="72" align="center" valign="middle"><img src="./assets/logos/meituan.png" width="44" alt="美团" /></td>
+    <td valign="middle"><b>美团</b></td>
+    <td valign="middle">测试开发实习生 · 支付质量组</td>
+    <td align="right" valign="middle"><sub>2024.08 — 2025.09</sub></td>
+  </tr>
+  <tr>
+    <td width="72" align="center" valign="middle"><img src="./assets/logos/baicizhan.png" width="44" alt="百词斩" /></td>
+    <td valign="middle"><b>百词斩</b></td>
+    <td valign="middle">后端开发实习生 · 业务平台组</td>
+    <td align="right" valign="middle"><sub>2024.05 — 2024.08</sub></td>
+  </tr>
+</table>
 
 <div align="center">
   <picture>
@@ -96,5 +120,5 @@
 </div>
 
 <p align="center">
-  <sub><i>统计卡与贪吃蛇由 <a href="scripts/generate-snake.js">generate-snake.js</a> 每日自动生成（视觉灵感来自 <a href="https://github.com/Platane/snk">Platane/snk</a>）。</i></sub>
+  <sub><i>贪吃蛇由 <a href="scripts/generate-snake.js">generate-snake.js</a> 每日自动生成（视觉灵感来自 <a href="https://github.com/Platane/snk">Platane/snk</a>）。</i></sub>
 </p>
