@@ -79,38 +79,9 @@
 
 ### 💼 工作经历 / Experience
 
-<table>
-  <tr>
-    <td width="72" align="center" valign="middle"><img src="./assets/logos/digitalchina.png" width="44" alt="神州数码集团" /></td>
-    <td valign="middle"><b>神州数码集团</b></td>
-    <td valign="middle">Agent 开发工程师</td>
-    <td align="right" valign="middle"><sub>2026.06 — 至今</sub></td>
-  </tr>
-  <tr>
-    <td width="72" align="center" valign="middle"><img src="./assets/logos/shidai.png" width="44" alt="时代共赢私募基金" /></td>
-    <td valign="middle"><b>时代共赢私募基金</b></td>
-    <td valign="middle">量化开发工程师</td>
-    <td align="right" valign="middle"><sub>2026.03 — 2026.06</sub></td>
-  </tr>
-  <tr>
-    <td width="72" align="center" valign="middle"><img src="./assets/logos/aia.svg" width="52" alt="AIA" /></td>
-    <td valign="middle"><b>AIA</b><br /><sub>友邦保险集团全球技术创新中心</sub></td>
-    <td valign="middle">AI 应用开发实习生 · RD 部门</td>
-    <td align="right" valign="middle"><sub>2025.12 — 2026.03</sub></td>
-  </tr>
-  <tr>
-    <td width="72" align="center" valign="middle"><img src="./assets/logos/meituan.png" width="44" alt="美团" /></td>
-    <td valign="middle"><b>美团</b></td>
-    <td valign="middle">测试开发实习生 · 支付质量组</td>
-    <td align="right" valign="middle"><sub>2024.08 — 2025.09</sub></td>
-  </tr>
-  <tr>
-    <td width="72" align="center" valign="middle"><img src="./assets/logos/baicizhan.png" width="44" alt="百词斩" /></td>
-    <td valign="middle"><b>百词斩</b></td>
-    <td valign="middle">后端开发实习生 · 业务平台组</td>
-    <td align="right" valign="middle"><sub>2024.05 — 2024.08</sub></td>
-  </tr>
-</table>
+<div align="center">
+  <img src="./assets/experience.svg" alt="工作经历：神州数码集团 Agent 开发工程师（2026.06 至今）、时代共赢私募基金 量化开发工程师、AIA 友邦保险全球技术创新中心 AI 应用开发实习生、美团 测试开发实习生、百词斩 后端开发实习生" width="100%" />
+</div>
 
 <div align="center">
   <picture>
