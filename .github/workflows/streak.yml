@@ -1,0 +1,28 @@
+name: Daily Streak
+
+on:
+  schedule:
+    - cron: "30 13 * * *" # 北京时间每天 21:30：检查今日贡献，没有则提交占位 commit
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/daily-streak.js', '.github/workflows/streak.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: streak
+  cancel-in-progress: true
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查今日贡献并按需占位提交
+        env:
+          GITHUB_USER: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/daily-streak.js
