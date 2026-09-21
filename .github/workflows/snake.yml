@@ -1,0 +1,49 @@
+name: Snake
+
+on:
+  schedule:
+    - cron: "17 16 * * *" # 北京时间每天 00:17 重新生成
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/**', '.github/workflows/snake.yml', 'README.md']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snake
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 生成贪吃蛇 SVG
+        env:
+          GITHUB_USER: ${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/generate-snake.js --out dist
+
+      - name: 发布到 output 分支
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --heads origin output | grep -q 'refs/heads/output'; then
+            git fetch origin output
+            git switch output
+          else
+            git switch --orphan output
+          fi
+          rm -f github-snake.svg github-snake-dark.svg
+          cp dist/github-snake.svg dist/github-snake-dark.svg .
+          git add github-snake.svg github-snake-dark.svg
+          if git diff --cached --quiet; then
+            echo "内容无变化，跳过推送"
+            exit 0
+          fi
+          git commit -m "chore: regenerate snake animation"
+          git push origin output
