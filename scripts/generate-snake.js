@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /**
- * 贪吃蛇贡献图动画生成器 —— 视觉灵感来自 https://github.com/Platane/snk
+ * 贪吃蛇贡献图动画生成器 —— 动效仿照 https://github.com/Platane/snk
  *
- * 抓取 GitHub 贡献日历，生成一条蛇巡游整个贡献网格、路过即“吃掉”彩色格子的
+ * 抓取 GitHub 贡献日历，生成一条蛇穿行贡献网格、路过即“吃掉”彩色格子的
  * 动画 SVG（纯 CSS 动画，零依赖），输出浅色 / 深色两个版本：
  *   github-snake.svg / github-snake-dark.svg
+ * 动效与 snk 对齐：每格 100ms，横向长滑行 + 短纵向折返的织行路线，
+ * 底部日期进度条随蛇推进，吃完回到左下休息位，循环重启时整图恢复重吃。
  *
  * 用法：
- *   GITHUB_TOKEN=<token> node scripts/generate-snake.js --user <login> [--out dist] [--seed N]
+ *   GITHUB_TOKEN=<token> node scripts/generate-snake.js --user <login> [--out dist]
  *
  * 数据源：优先 GitHub GraphQL API（需要 token），失败时回退抓取公开贡献页 HTML。
  */
@@ -34,8 +36,8 @@ const SEGMENTS = [       // 蛇 = 1 个头 + 3 节尾巴，方块逐渐变小
   { o: 3.0, w: 9.9, rx: 3.3 },
 ];
 
-const STEP_MS = 110;         // 蛇每爬一格的耗时
-const REST_MS = 2500;        // 全部吃完后的收尾停留
+const STEP_MS = 100;         // 蛇每爬一格的耗时（与 snk 一致）
+const REST_MS = 800;         // 吃完后在休息位的停留（与 snk 观感一致）
 const MAX_LOOP_MS = 150000;  // 单圈时长上限
 const FLASH_PCT = 0.02;      // 格子被吃掉的渐变时长（占单圈百分比）
 
@@ -142,83 +144,54 @@ function computeLevels(days) {
 }
 
 // ---------------------------------------------------------------------------
-// 蛇的巡游路线
+// 蛇的巡游路线（仿 snk 的动效：目标点 + 横向滑行）
 // ---------------------------------------------------------------------------
-function mulberry32(seed) {
-  return function () {
-    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // 下、右、上、左
-
-function weightedPick(items, weights, rand) {
-  const sum = weights.reduce((a, b) => a + b, 0);
-  let x = rand() * sum;
-  for (let i = 0; i < items.length; i++) {
-    x -= weights[i];
-    if (x <= 0) return items[i];
-  }
-  return items[items.length - 1];
-}
-
 /**
- * 深度优先巡游：直行优先、适度右转、偏好更早的日期（靠左的列），
- * 走到死路就原路折返 —— 得到一条覆盖全部格子的有机蛇行路径。
- * 返回 route（[列, 行] 序列，含场外入场/离场段）和每格首次到访的下标。
+ * 仿照 snk 的路线：只把「有贡献的格子」当作必经目标（按日期大致从左到右
+ * 贪心就近连接），相邻目标之间走「先水平后垂直」的 L 形路径，途中路过的
+ * 目标顺路吃掉 —— 于是呈现出「长横向滑行 + 短纵向折返 + 偶尔回折」的织行
+ * 动效，而不是逐格全覆盖的慢速蛇形。吃完后沿当前行滑回第 4 列附近原地
+ * 休息到本轮结束，循环重启时跳变很小。
  */
-function buildRoute(cells, COLS, rand) {
-  const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
-  let realCells = 0;
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (cells[r][c]) realCells++;
-
-  // 入场：蛇趴在网格上方第一行（虚拟位置 (-i, -1)），滑到 (0,-1) 后向下钻进网格
-  const route = [[0, -1]];
-  let startR = 0;
-  while (startR < ROWS && !cells[startR][0]) startR++;
-  if (startR === ROWS) throw new Error('空网格');
-
-  const stack = [];
-  let cur = [0, startR];
-  let dir = [0, 1];
-  const push = pos => { route.push(pos); dir = [pos[0] - cur[0], pos[1] - cur[1]]; cur = pos; };
-  push(cur);
-  visited[startR][0] = true;
-  stack.push([0, startR]);
-  let remaining = realCells - 1;
-
-  while (stack.length && remaining > 0) {
-    const [cc, cr] = cur;
-    const cands = DIRS.filter(([dc, dr]) => {
-      const nc = cc + dc, nr = cr + dr;
-      return nc >= 0 && nc < COLS && nr >= 0 && nr < ROWS
-        && cells[nr][nc] && !visited[nr][nc];
-    });
-    if (cands.length) {
-      const weights = cands.map(([dc, dr]) => {
-        let w;
-        if (dc === dir[0] && dr === dir[1]) w = 8;            // 直行
-        else if (dc === -dir[0] && dr === -dir[1]) w = 0.4;   // 掉头
-        else w = dir[0] * dr - dir[1] * dc > 0 ? 4.5 : 3.5;   // 右转略优于左转
-        return w * (1.6 - 0.6 * (cc + dc) / COLS);            // 日期越早权重越高
-      });
-      const pick = weightedPick(cands, weights, rand);
-      const next = [cc + pick[0], cr + pick[1]];
-      visited[next[1]][next[0]] = true;
-      stack.push(next);
-      push(next);
-      remaining--;
-    } else {
-      stack.pop(); // 折返：退回一步继续找路
-      if (stack.length) push(stack[stack.length - 1]);
+function buildRoute(cells, COLS) {
+  const targets = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (cells[r][c] && cells[r][c].count > 0) targets.push([c, r]);
     }
   }
+  if (!targets.length) throw new Error('过去一年没有任何贡献，无法生成路线');
 
-  // 离场：沿当前行向左滑出画面（第 -2 列起完全出界，循环重启时跳变不可见）
-  for (let c = cur[0] - 1; c >= -6; c--) route.push([c, cur[1]]);
+  // 入场：蛇趴在网格上方第一行（虚拟位置 (-i, -1)），滑到 (0,-1) 后向下钻进网格
+  const route = [[0, -1], [0, 0]];
+  const pending = new Set(targets.map(t => t.join(',')));
+  let cur = [0, 0];
+  let remaining = pending.size;
+
+  while (remaining > 0) {
+    // 贪心选下一个目标：横向距离为主，向左折返加罚
+    let best = null, bestCost = Infinity;
+    for (const key of pending) {
+      const [tc, tr] = key.split(',').map(Number);
+      const dc = tc - cur[0], dr = tr - cur[1];
+      const cost = Math.abs(dc) + Math.abs(dr) * 1.4 + (dc < 0 ? 2.5 : 0);
+      if (cost < bestCost) { bestCost = cost; best = [tc, tr]; }
+    }
+    pending.delete(best.join(','));
+    // 先水平后垂直的 L 形连接；途中经过的目标顺路吃掉
+    const step = pos => {
+      route.push(pos);
+      const k = pos.join(',');
+      if (pending.has(k)) { pending.delete(k); remaining--; }
+    };
+    while (cur[0] !== best[0]) { cur = [cur[0] + Math.sign(best[0] - cur[0]), cur[1]]; step(cur); }
+    while (cur[1] !== best[1]) { cur = [cur[0], cur[1] + Math.sign(best[1] - cur[1])]; step(cur); }
+    remaining--;
+  }
+  if (pending.size) throw new Error(`有 ${pending.size} 个目标未被吃掉`);
+
+  // 收尾：沿当前行滑回左下休息位（第 4 列），原地休息到本轮结束
+  while (cur[0] > 4) { cur = [cur[0] - 1, cur[1]]; route.push(cur); }
 
   // 每个真实格子的首次到访下标（= 被吃掉的时刻）
   const firstVisit = new Map();
@@ -228,9 +201,6 @@ function buildRoute(cells, COLS, rand) {
       if (!firstVisit.has(k)) firstVisit.set(k, i);
     }
   });
-  if (firstVisit.size !== realCells) {
-    throw new Error(`路径未覆盖全部格子：${firstVisit.size}/${realCells}`);
-  }
   return { route, firstVisit };
 }
 
@@ -441,11 +411,10 @@ function renderLangsSvg(langs) {
 // 主流程
 // ---------------------------------------------------------------------------
 function parseArgs(argv) {
-  const opts = { user: process.env.GITHUB_USER, out: 'dist', seed: null };
+  const opts = { user: process.env.GITHUB_USER, out: 'dist' };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--user') opts.user = argv[++i];
     else if (argv[i] === '--out') opts.out = argv[++i];
-    else if (argv[i] === '--seed') opts.seed = argv[++i];
     else throw new Error(`未知参数：${argv[i]}`);
   }
   return opts;
@@ -459,24 +428,31 @@ async function main() {
   const { cells, COLS } = buildGrid(days);
   const levels = computeLevels(days);
 
-  // 随机种子默认取当天日期，每天生成一条略不相同的巡游路线
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = mulberry32(opts.seed === null ? +today : +opts.seed);
-  const { route, firstVisit } = buildRoute(cells, COLS, rand);
+  const { route, firstVisit } = buildRoute(cells, COLS);
 
   const N = route.length;
   const stepMs = Math.min(STEP_MS, Math.max(40, (MAX_LOOP_MS - REST_MS) / (N - 1)));
   const totalMs = Math.round(stepMs * (N - 1) + REST_MS);
 
+  // 每天的“被吃时刻”：路线只经过有贡献的格子，其余天沿用前一个已吃天
+  // 的时刻（向前填充），保证进度条单调推进、最终填满
+  const firstRow = new Date(days[0].date + 'T00:00:00Z').getUTCDay();
+  const eatMs = days.map((d, j) => {
+    const c = Math.floor((firstRow + j) / 7), r = (firstRow + j) % 7;
+    const v = firstVisit.get(c + ',' + r);
+    return v === undefined ? null : v * stepMs;
+  });
+  let fill = eatMs.find(t => t !== null) ?? 0;
+  for (let j = 0; j < eatMs.length; j++) {
+    if (eatMs[j] === null) eatMs[j] = fill;
+    else fill = eatMs[j];
+  }
+
   // 进度条分段：贡献等级相同的连续日期合为一段
   const timeline = [];
   for (let j = 0; j < days.length; j++) {
     const level = levels(days[j].count);
-    const cell = (() => {
-      const firstRow = new Date(days[0].date + 'T00:00:00Z').getUTCDay();
-      const c = Math.floor((firstRow + j) / 7), r = (firstRow + j) % 7;
-      return firstVisit.get(c + ',' + r) * stepMs;
-    })();
+    const cell = eatMs[j];
     const last = timeline[timeline.length - 1];
     if (last && last.level === level) {
       last.j1 = j;
