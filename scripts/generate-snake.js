@@ -45,6 +45,8 @@ const PALETTES = {
   light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
   dark:  ['#161b22', '#01311f', '#034525', '#0f6d31', '#00c647'],
 };
+// 进度条“轨道色”：无贡献日期段的淡淡底色（深色模式用稍亮的暗色，否则看不见）
+const TRACK = { light: '#ebedf0', dark: '#21262d' };
 const SNAKE_COLOR = 'purple';
 const BORDER_COLOR = '#1b1f230a';
 
@@ -264,11 +266,12 @@ function renderSvg(theme, ctx) {
   const barRects = [];
   const barCss = [];
   timeline.forEach((run, ri) => {
-    if (run.level === 0) return; // 空白期留白
     const name = 'u' + ri.toString(36);
     const x0 = xOf(run.j0);
     const x1 = xEnd(run.j1);
     const w = x1 - x0;
+    // 空白期也渲染为淡淡的轨道色段：进度条全程从左到右可见地推进
+    const fill = run.level === 0 ? 'var(--tr)' : `var(--c${run.level})`;
     barRects.push(`<rect class="u ${name}" height="${BAR_H}" width="${num1(w)}" `
       + `x="${num1(x0)}" y="${BAR_Y}"/>`);
     // 按蛇吃掉各天的时刻展开（时间升序）；进度条只前进不回退（取运行最大值）
@@ -305,7 +308,7 @@ function renderSvg(theme, ctx) {
       frames[frames.length - 1] = `${pct(t)}%,100%{transform:scale(${num3(s)},1)}`;
     }
     barCss.push(`@keyframes ${name}{${frames.join('')}}`);
-    barCss.push(`.u.${name}{fill:var(--c${run.level});animation-name:${name};`
+    barCss.push(`.u.${name}{fill:${fill};animation-name:${name};`
       + `transform-origin:${num1(x0)}px 0}`);
   });
 
@@ -326,7 +329,7 @@ function renderSvg(theme, ctx) {
   const snakeRules = SEGMENTS.map((s, k) =>
     `.s.s${k}{transform:translate(${k * PITCH}px,-${PITCH}px);animation-name:s${k}}`).join('');
 
-  const rootVars = `--cb:${BORDER_COLOR};--cs:${SNAKE_COLOR};--ce:${pal[0]};`
+  const rootVars = `--cb:${BORDER_COLOR};--cs:${SNAKE_COLOR};--ce:${pal[0]};--tr:${TRACK[theme]};`
     + pal.map((c, i) => `--c${i}:${c}`).join(';');
 
   const style = [
