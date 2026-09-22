@@ -2,7 +2,7 @@ name: Daily Streak
 
 on:
   schedule:
-    - cron: "30 13 * * *" # 北京时间每天 21:30：检查今日贡献，没有则提交占位 commit
+    - cron: "0 12 * * *" # 北京时间每天 20:00：检查今日贡献，没有则提交占位 commit（预留 GitHub 定时延迟余量）
   workflow_dispatch:
   push:
     branches: [main]
