@@ -29,12 +29,12 @@ const BAR_Y = 144;       // 底部时间进度条的 y
 const BAR_H = 12;
 const VIEW_TOP = -32;    // viewBox 上缘（给入场的蛇留空间）
 
-const SEGMENTS = [       // 蛇 = 1 个头 + 3 节尾巴，方块逐渐变小
-  { o: 0.8, w: 14.4, rx: 4.5 },
-  { o: 1.8, w: 12.3, rx: 4.1 },
-  { o: 2.6, w: 10.8, rx: 3.6 },
-  { o: 3.0, w: 9.9, rx: 3.3 },
-];
+// 蛇节尺寸：头最大，向尾巴递减（前四节与 snk 一致，此后继续收细）
+function segSize(k) {
+  const base = [14.4, 12.3, 10.8, 9.9][k];
+  const w = base !== undefined ? base : Math.max(6.5, 9.9 - (k - 4) * 0.35);
+  return { o: +(8 - w / 2).toFixed(1), w: +w.toFixed(1), rx: +(w / 3).toFixed(1) };
+}
 
 const STEP_MS = 100;         // 蛇每爬一格的耗时（与 snk 一致）
 const REST_MS = 800;         // 吃完后在休息位的停留（与 snk 观感一致）
@@ -217,7 +217,7 @@ const num1 = n => (+n.toFixed(1)).toString();
 const num3 = n => n.toFixed(3);
 
 function renderSvg(theme, ctx) {
-  const { cells, COLS, days, levelOf, route, firstVisit, stepMs, totalMs, timeline } = ctx;
+  const { cells, COLS, days, levelOf, route, firstVisit, eatSteps, stepMs, totalMs, timeline } = ctx;
   const pal = PALETTES[theme];
   const routeOf = i => (i >= 0 ? route[i] : [-i, -1]);
   const pct = t => (t <= 0 ? '0' : (t * 100 / totalMs).toFixed(2));
@@ -305,22 +305,46 @@ function renderSvg(theme, ctx) {
       + `transform-origin:${num1(x0)}px 0}`);
   });
 
-  // -- 蛇（头 + 3 节尾巴；第 k 节的位置 = 头在 t-k*step 时的位置）------------
+  // -- 蛇（每吃掉一个有贡献的格子，尾巴就长出一节——经典贪吃蛇玩法）---------
+  // 第 k 节在时刻 t 的位置 = 头在 t-k*step 时的位置；k≥4 的节在第 (k-3) 次
+  // 吃掉格子时从尾巴处弹出（出现前不可见）；循环结尾整体淡出后重置。
   const vertices = compressRoute(route);
   const N = route.length;
-  const snakeRects = SEGMENTS.map((s, k) =>
-    `<rect class="s s${k}" x="${s.o}" y="${s.o}" width="${s.w}" height="${s.w}" `
-    + `rx="${s.rx}" ry="${s.rx}"/>`).join('');
-  const snakeCss = SEGMENTS.map((s, k) => {
-    const idx = [...new Set([-k, ...vertices])].sort((a, b) => a - b).filter(i => i <= N - 1);
-    const frames = idx.map(i => {
+  const segCount = 4 + eatSteps.length;
+  const snakeRects = [];
+  for (let k = 0; k < segCount; k++) {
+    const s = segSize(k);
+    snakeRects.push(`<rect class="s s${k}" x="${s.o}" y="${s.o}" width="${s.w}" height="${s.w}" `
+      + `rx="${s.rx}" ry="${s.rx}"/>`);
+  }
+  const snakeCss = [];
+  const snakeRules = [];
+  for (let k = 0; k < segCount; k++) {
+    const frame = (i, op) => {
       const p = routeOf(i);
-      return `${pct((i + k) * stepMs)}%{transform:translate(${p[0] * PITCH}px,${p[1] * PITCH}px)}`;
-    });
-    return `@keyframes s${k}{${frames.join('')}}`;
-  });
-  const snakeRules = SEGMENTS.map((s, k) =>
-    `.s.s${k}{transform:translate(${k * PITCH}px,-${PITCH}px);animation-name:s${k}}`).join('');
+      return `${pct((i + k) * stepMs)}%{transform:translate(${p[0] * PITCH}px,${p[1] * PITCH}px);opacity:${op}}`;
+    };
+    const rest = routeOf(N - 1);
+    const endFrame = `100%{transform:translate(${rest[0] * PITCH}px,${rest[1] * PITCH}px);opacity:0}`;
+    // 段 k 的最晚关键帧时刻 = (i+k)*step，不能超出循环总长
+    const maxIdx = Math.min(N - 1, Math.floor(totalMs / stepMs) - k);
+    if (k < 4) {
+      // 初始四节：全程可见
+      const idx = [...new Set([-k, ...vertices])].sort((a, b) => a - b).filter(i => i <= maxIdx);
+      snakeCss.push(`@keyframes s${k}{${idx.map(i => frame(i, 1)).join('')}${endFrame}}`);
+      snakeRules.push(`.s.s${k}{transform:translate(${k * PITCH}px,-${PITCH}px);animation-name:s${k}}`);
+    } else {
+      // 长出的节：在对应吃掉时刻从尾巴弹出（此前不可见）
+      const appearIdx = eatSteps[k - 4] - k; // route 下标
+      const parts = [frame(appearIdx - 1, 0), frame(appearIdx, 1)];
+      for (const i of vertices) {
+        if (i > appearIdx && i <= maxIdx) parts.push(frame(i, 1));
+      }
+      parts.push(endFrame);
+      snakeCss.push(`@keyframes s${k}{${parts.join('')}}`);
+      snakeRules.push(`.s.s${k}{transform:translate(${k * PITCH}px,-${PITCH}px);opacity:0;animation-name:s${k}}`);
+    }
+  }
 
   const rootVars = `--cb:${BORDER_COLOR};--cs:${SNAKE_COLOR};--ce:${pal[0]};--tr:${TRACK[theme]};`
     + pal.map((c, i) => `--c${i}:${c}`).join(';');
@@ -429,6 +453,19 @@ async function main() {
 
   const { route, firstVisit } = buildRoute(cells, COLS);
 
+  // 吃掉格子的路线时刻（按吃掉顺序）：每吃一格，蛇尾巴长出一节
+  const eatSteps = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const day = cells[r][c];
+      if (day && levelOf(day) > 0) {
+        const i = firstVisit.get(c + ',' + r);
+        if (i !== undefined) eatSteps.push(i);
+      }
+    }
+  }
+  eatSteps.sort((a, b) => a - b);
+
   const N = route.length;
   const stepMs = Math.min(STEP_MS, Math.max(40, (MAX_LOOP_MS - REST_MS) / (N - 1)));
   const totalMs = Math.round(stepMs * (N - 1) + REST_MS);
@@ -462,7 +499,7 @@ async function main() {
     }
   }
 
-  const ctx = { cells, COLS, days, levelOf, route, firstVisit, stepMs, totalMs, timeline };
+  const ctx = { cells, COLS, days, levelOf, route, firstVisit, eatSteps, stepMs, totalMs, timeline };
   const outDir = path.resolve(opts.out);
   fs.mkdirSync(outDir, { recursive: true });
   for (const theme of ['light', 'dark']) {
