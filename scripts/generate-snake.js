@@ -52,16 +52,18 @@ const BORDER_COLOR = '#1b1f230a';
 
 // ---------------------------------------------------------------------------
 // 贡献日历抓取
+// 主数据源：github.com/users/<user>/contributions 页面 HTML（与官方主页热力图
+// 完全同源——包含匿名化的私有贡献；GraphQL 接口在用户的 token 缺少相应权限时
+// 会漏掉私有贡献，导致格子比官方少）
 // ---------------------------------------------------------------------------
 async function fetchCalendar(user, token) {
-  if (token) {
-    try {
-      return await fetchViaGraphql(user, token);
-    } catch (e) {
-      console.warn(`GraphQL 拉取失败（${e.message}），回退 HTML 抓取`);
-    }
+  try {
+    return await fetchViaHtml(user);
+  } catch (e) {
+    console.warn(`贡献页 HTML 抓取失败（${e.message}），回退 GraphQL`);
   }
-  return fetchViaHtml(user);
+  if (token) return fetchViaGraphql(user, token);
+  throw new Error('无 token 且 HTML 抓取失败，无法获取贡献数据');
 }
 
 async function fetchViaGraphql(user, token) {
@@ -99,29 +101,18 @@ async function fetchViaHtml(user) {
   if (!res.ok) throw new Error(`贡献页 HTTP ${res.status}`);
   const html = await res.text();
   const days = [];
-  // 新版页面：日历数据内嵌在 JSON 中（两种键序都尝试）
-  for (const m of html.matchAll(/"contributionCount":(\d+),"date":"(\d{4}-\d{2}-\d{2})"/g)) {
-    days.push({ date: m[2], count: +m[1] });
+  // 官方日历单元格：<td ... data-date="YYYY-MM-DD" ... data-level="N" ...>
+  // 属性顺序不固定，按标签整体解析
+  for (const m of html.matchAll(/<td\b[^>]*\bdata-date="(\d{4}-\d{2}-\d{2})"[^>]*>/g)) {
+    const tag = m[0];
+    const level = (tag.match(/\bdata-level="(\d)"/) || [])[1];
+    days.push({ date: m[1], count: level ? +level : 0, level: level ? +level : 0 });
   }
-  if (days.length < 300) {
-    days.length = 0;
-    for (const m of html.matchAll(/"date":"(\d{4}-\d{2}-\d{2})","contributionCount":(\d+)/g)) {
-      days.push({ date: m[1], count: +m[2] });
-    }
-  }
-  if (days.length < 300) { // 旧版页面：rect 元素
-    days.length = 0;
-    for (const m of html.matchAll(/<rect\b[^>]*ContributionCalendar-day[^>]*>/g)) {
-      const tag = m[0];
-      const date = (tag.match(/data-date="(\d{4}-\d{2}-\d{2})"/) || [])[1];
-      const count = (tag.match(/data-count="(\d+)"/) || [])[1];
-      if (date) days.push({ date, count: +(count || 0) });
-    }
-  }
-  if (days.length < 300) throw new Error('无法从 HTML 解析贡献日历');
+  if (days.length < 300) throw new Error(`HTML 解析天数异常：${days.length}`);
   days.sort((a, b) => (a.date < b.date ? -1 : 1));
-  const total = days.reduce((s, d) => s + d.count, 0);
-  return { days, total, source: 'html' };
+  // 页面只给等级（私有贡献匿名化），用等级当计数用于路线目标判定
+  const total = days.reduce((s, d) => s + (d.level > 0 ? 1 : 0), 0);
+  return { days, total, source: 'html（官方页面）' };
 }
 
 // ---------------------------------------------------------------------------
