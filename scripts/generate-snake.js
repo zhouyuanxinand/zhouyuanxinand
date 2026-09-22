@@ -66,7 +66,7 @@ async function fetchCalendar(user, token) {
 
 async function fetchViaGraphql(user, token) {
   const query = `query($l:String!){user(login:$l){contributionsCollection{contributionCalendar{`
-    + `totalContributions weeks{contributionDays{date contributionCount}}}}}}`;
+    + `totalContributions weeks{contributionDays{date contributionCount contributionLevel}}}}}}`;
   const res = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
@@ -82,9 +82,11 @@ async function fetchViaGraphql(user, token) {
   const cal = json.data && json.data.user && json.data.user.contributionsCollection
     && json.data.user.contributionsCollection.contributionCalendar;
   if (!cal) throw new Error('日历数据为空（用户不存在？）');
+  // 直接使用 GitHub 官方的 contributionLevel（与官网热力图配色一致），不再自行估算
+  const LEVELS = { NONE: 0, FIRST_QUARTILE: 1, SECOND_QUARTILE: 2, THIRD_QUARTILE: 3, FOURTH_QUARTILE: 4 };
   const days = [];
   for (const w of cal.weeks) for (const d of w.contributionDays) {
-    days.push({ date: d.date, count: d.contributionCount });
+    days.push({ date: d.date, count: d.contributionCount, level: LEVELS[d.contributionLevel] ?? 0 });
   }
   if (days.length < 300) throw new Error(`日历天数异常：${days.length}`);
   return { days, total: cal.totalContributions, source: 'graphql' };
@@ -224,7 +226,7 @@ const num1 = n => (+n.toFixed(1)).toString();
 const num3 = n => n.toFixed(3);
 
 function renderSvg(theme, ctx) {
-  const { cells, COLS, days, levels, route, firstVisit, stepMs, totalMs, timeline } = ctx;
+  const { cells, COLS, days, levelOf, route, firstVisit, stepMs, totalMs, timeline } = ctx;
   const pal = PALETTES[theme];
   const routeOf = i => (i >= 0 ? route[i] : [-i, -1]);
   const pct = t => (t <= 0 ? '0' : (t * 100 / totalMs).toFixed(2));
@@ -241,7 +243,7 @@ function renderSvg(theme, ctx) {
       const day = cells[r][c];
       if (!day) continue;
       const x = OX + PITCH * c, y = OY + PITCH * r;
-      const level = levels(day.count);
+      const level = levelOf(day);
       if (level === 0) {
         cellRects.push(`<rect class="c" x="${x}" y="${y}" rx="2" ry="2"/>`);
       } else {
@@ -430,7 +432,9 @@ async function main() {
 
   const { days, total, source } = await fetchCalendar(opts.user, process.env.GITHUB_TOKEN);
   const { cells, COLS } = buildGrid(days);
-  const levels = computeLevels(days);
+  // 优先使用 GraphQL 返回的官方 contributionLevel；HTML 兜底数据没有等级时回退到本地估算
+  const computedLevels = computeLevels(days);
+  const levelOf = day => (day.level !== undefined ? day.level : computedLevels(day.count));
 
   const { route, firstVisit } = buildRoute(cells, COLS);
 
@@ -455,7 +459,7 @@ async function main() {
   // 进度条分段：贡献等级相同的连续日期合为一段
   const timeline = [];
   for (let j = 0; j < days.length; j++) {
-    const level = levels(days[j].count);
+    const level = levelOf(days[j]);
     const cell = eatMs[j];
     const last = timeline[timeline.length - 1];
     if (last && last.level === level) {
@@ -467,7 +471,7 @@ async function main() {
     }
   }
 
-  const ctx = { cells, COLS, days, levels, route, firstVisit, stepMs, totalMs, timeline };
+  const ctx = { cells, COLS, days, levelOf, route, firstVisit, stepMs, totalMs, timeline };
   const outDir = path.resolve(opts.out);
   fs.mkdirSync(outDir, { recursive: true });
   for (const theme of ['light', 'dark']) {
